@@ -14,7 +14,11 @@ Find external dependencies of binary libraries.
 """
 
 import ctypes.util
+import collections
+import functools
+import multiprocessing
 import os
+import platform
 import re
 import sys
 from glob import glob
@@ -45,6 +49,9 @@ if is_win:
     import pefile
     # Do not load all the directories information from the PE file
     pefile.fast_load = True
+    is_win_10 = (platform.win32_ver()[0] == '10')
+else:
+    is_win_10 = False
 
 
 def getfullnameof(mod, xtrapath=None):
@@ -219,19 +226,51 @@ def Dependencies(lTOC, xtrapath=None, manifest=None, redirects=None):
     # directly with PyInstaller.
     lTOC = _extract_from_egg(lTOC)
 
-    for nm, pth, typ in lTOC:
-        if nm.upper() in seen:
-            continue
-        logger.debug("Analyzing %s", pth)
-        seen.add(nm.upper())
-        if is_win:
-            for ftocnm, fn in getAssemblyFiles(pth, manifest, redirects):
+    # 4 processes may yield up to +40% speed on 2 CPUs
+    # 2 processes may yield up to +30% speed on 2 CPUs
+    processes = 2 * os.cpu_count()
+    pool = multiprocessing.Pool(processes)
+
+    if is_win:
+        # Search for required assemblies and add them to the TOC
+        paths = [path for name, path, typ in lTOC]
+        assemblies = pool.map(
+            functools.partial(getAssemblyFiles, manifest=manifest, redirects=redirects),
+            paths
+        )
+        # getAssemblyFiles returns a list of tuples, so assemblies is a
+        # list of list of tuples
+        for assembly in assemblies:
+            for ftocnm, fn in assembly:
                 lTOC.append((ftocnm, fn, 'BINARY'))
-        for lib, npth in selectImports(pth, xtrapath):
-            if lib.upper() in seen or npth.upper() in seen:
+
+    dataset = collections.deque([(name, path, typ) for (name, path, typ) in lTOC])
+    while True:
+        # Breakdown the dataset in chunks as big as the chosen number of processes
+        # instead of just feeding the whole dataset into process pool
+        # so that we can keep the "seen" cache in main process only
+        chunk = []
+        while (len(chunk) < processes) and len(dataset):
+            (name, path, typ) = dataset.pop()
+            if name.upper() in seen:
                 continue
-            seen.add(npth.upper())
-            lTOC.append((lib, npth, 'BINARY'))
+            chunk.append(path)
+
+        if not chunk:
+            break  # From while True, no more data
+
+        imports = pool.map(
+            functools.partial(selectImports, xtrapath=xtrapath),
+            chunk
+        )
+        # selectImports returns a list of pairs, so 'imports' is
+        # a list of lists of pairs
+        for item_dependencies in imports:
+            for (lib, npth) in item_dependencies:
+                if lib.upper() in seen or npth.upper() in seen:
+                    continue
+                seen.add(npth.upper())
+                lTOC.append((lib, npth, 'BINARY'))
 
     return lTOC
 
