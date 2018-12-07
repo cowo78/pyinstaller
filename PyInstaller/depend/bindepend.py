@@ -16,6 +16,7 @@ Find external dependencies of binary libraries.
 import ctypes.util
 import collections
 import functools
+import itertools
 import multiprocessing
 import os
 import platform
@@ -49,9 +50,6 @@ if is_win:
     import pefile
     # Do not load all the directories information from the PE file
     pefile.fast_load = True
-    is_win_10 = (platform.win32_ver()[0] == '10')
-else:
-    is_win_10 = False
 
 
 def getfullnameof(mod, xtrapath=None):
@@ -233,44 +231,43 @@ def Dependencies(lTOC, xtrapath=None, manifest=None, redirects=None):
 
     if is_win:
         # Search for required assemblies and add them to the TOC
-        paths = [path for name, path, typ in lTOC]
+        paths = set(os.path.normpath(os.path.normcase(path)) for name, path, typ in lTOC)
         assemblies = pool.map(
             functools.partial(getAssemblyFiles, manifest=manifest, redirects=redirects),
-            paths
-        )
+            paths)
         # getAssemblyFiles returns a list of tuples, so assemblies is a
         # list of list of tuples
-        for assembly in assemblies:
-            for ftocnm, fn in assembly:
-                lTOC.append((ftocnm, fn, 'BINARY'))
+        for ftocnm, fn in itertools.chain(assemblies):
+            lTOC.append((ftocnm, fn, 'BINARY'))
 
-    dataset = collections.deque([(name, path, typ) for (name, path, typ) in lTOC])
+    dataset = collections.deque((name, path, typ) for (name, path, typ) in lTOC)
     while True:
         # Breakdown the dataset in chunks as big as the chosen number of processes
         # instead of just feeding the whole dataset into process pool
         # so that we can keep the "seen" cache in main process only
         chunk = []
-        while (len(chunk) < processes) and len(dataset):
-            (name, path, typ) = dataset.pop()
-            if name.upper() in seen:
-                continue
-            chunk.append(path)
+        while len(chunk) < processes and len(dataset):
+            name, path, typ = dataset.pop()
+            name = name.upper()
+            if name not in seen:
+                chunk.append(path)
+                seen.add(name)
 
         if not chunk:
             break  # From while True, no more data
 
         imports = pool.map(
             functools.partial(selectImports, xtrapath=xtrapath),
-            chunk
-        )
+            chunk)
         # selectImports returns a list of pairs, so 'imports' is
         # a list of lists of pairs
-        for item_dependencies in imports:
-            for (lib, npth) in item_dependencies:
-                if lib.upper() in seen or npth.upper() in seen:
-                    continue
-                seen.add(npth.upper())
-                lTOC.append((lib, npth, 'BINARY'))
+        for lib, npth in itertools.chain(imports):
+            npth = os.path.normpath(os.path.normcase(npth))
+            if lib in seen or npth in seen:
+                continue
+            seen.add(lib)
+            seen.add(npth)
+            lTOC.append((lib, npth, 'BINARY'))
 
     return lTOC
 
@@ -440,6 +437,7 @@ def getAssemblyFiles(pth, manifest=None, redirects=None):
 
     Return a list of pairs (name, fullpath)
     """
+    logger.debug("Analyzing %s for assembly dependencies", pth)
     rv = []
     if manifest:
         _depNames = set(dep.name for dep in manifest.dependentAssemblies)
@@ -534,6 +532,7 @@ def selectImports(pth, xtrapath=None):
 
     Return a list of pairs (name, fullpath)
     """
+    logger.debug("Analyzing %s for binary dependencies", pth)
     rv = []
     if xtrapath is None:
         xtrapath = [os.path.dirname(pth)]
