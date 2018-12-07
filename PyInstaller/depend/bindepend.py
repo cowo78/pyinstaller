@@ -237,7 +237,7 @@ def Dependencies(lTOC, xtrapath=None, manifest=None, redirects=None):
             paths)
         # getAssemblyFiles returns a list of tuples, so assemblies is a
         # list of list of tuples
-        for ftocnm, fn in itertools.chain(assemblies):
+        for ftocnm, fn in itertools.chain(*assemblies):
             lTOC.append((ftocnm, fn, 'BINARY'))
 
     dataset = collections.deque((name, path, typ) for (name, path, typ) in lTOC)
@@ -261,13 +261,16 @@ def Dependencies(lTOC, xtrapath=None, manifest=None, redirects=None):
             chunk)
         # selectImports returns a list of pairs, so 'imports' is
         # a list of lists of pairs
-        for lib, npth in itertools.chain(imports):
+        for lib, npth in itertools.chain(*imports):
             npth = os.path.normpath(os.path.normcase(npth))
             if lib in seen or npth in seen:
                 continue
             seen.add(lib)
             seen.add(npth)
             lTOC.append((lib, npth, 'BINARY'))
+
+    pool.close()
+    pool.join()
 
     return lTOC
 
