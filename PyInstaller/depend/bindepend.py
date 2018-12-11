@@ -245,6 +245,11 @@ def Dependencies(lTOC, xtrapath=None, manifest=None, redirects=None):
         # Breakdown the dataset in chunks as big as the chosen number of processes
         # instead of just feeding the whole dataset into process pool
         # so that we can keep the "seen" cache in main process only
+        # It's true that elements in two different chunks may find common dependencies
+        # and since processes don't share a common cache these same common dependencies
+        # will be inspected multiple times, but this is an acceptable tradeoff
+        # at least for now since implementing a common shared cache would bring
+        # in far more complexity
         chunk = []
         while len(chunk) < processes and len(dataset):
             name, path, typ = dataset.pop()
