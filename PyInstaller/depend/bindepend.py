@@ -226,7 +226,8 @@ def Dependencies(lTOC, xtrapath=None, manifest=None, redirects=None):
 
     # 4 processes may yield up to +40% speed on 2 CPUs
     # 2 processes may yield up to +30% speed on 2 CPUs
-    processes = 2 * os.cpu_count()
+    # os.cpu_count is only available since Python 3.4, while multiprocessing is since 2.6
+    processes = 2 * multiprocessing.cpu_count()
     pool = multiprocessing.Pool(processes)
 
     if is_win:
