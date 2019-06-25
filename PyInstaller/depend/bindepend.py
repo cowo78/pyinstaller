@@ -267,13 +267,13 @@ def Dependencies(lTOC, xtrapath=None, manifest=None, redirects=None):
             chunk)
         # selectImports returns a list of pairs, so 'imports' is
         # a list of lists of pairs
-        for lib, npth in itertools.chain(*imports):
-            npth = os.path.normpath(os.path.normcase(npth))
-            if lib in seen or npth in seen:
+        for lib, npath in itertools.chain(*imports):
+            npath = os.path.normpath(os.path.normcase(npath))
+            if lib in seen or npath in seen:
                 continue
             seen.add(lib)
-            seen.add(npth)
-            lTOC.append((lib, npth, 'BINARY'))
+            seen.add(npath)
+            lTOC.append((lib, npath, 'BINARY'))
 
     pool.close()
     pool.join()
