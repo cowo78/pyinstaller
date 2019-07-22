@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# Copyright (c) 2018-2019, PyInstaller Development Team.
+# Copyright (c) 2005-2018, PyInstaller Development Team.
 #
 # Distributed under the terms of the GNU General Public License with exception
 # for distributing bootloader.
@@ -7,9 +7,9 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 #-----------------------------------------------------------------------------
 
-# hook for https://github.com/r0x0r/pywebview
 
-from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
+from PyInstaller.utils.hooks import collect_glib_share_files, get_gi_typelibs
 
-datas = collect_data_files('webview', 'lib')
-binaries = collect_dynamic_libs('webview')
+binaries, datas, hiddenimports = get_gi_typelibs('GtkSource', '3.0')
+
+datas += collect_glib_share_files('gtksourceview-3.0')

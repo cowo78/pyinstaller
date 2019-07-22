@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# Copyright (c) 2018-2019, PyInstaller Development Team.
+# Copyright (c) 2005-2018, PyInstaller Development Team.
 #
 # Distributed under the terms of the GNU General Public License with exception
 # for distributing bootloader.
@@ -7,9 +7,9 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 #-----------------------------------------------------------------------------
 
-# hook for https://github.com/r0x0r/pywebview
 
-from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
-
-datas = collect_data_files('webview', 'lib')
-binaries = collect_dynamic_libs('webview')
+def pre_safe_import_module(api):
+    # PyGObject modules loaded through the gi repository are marked as
+    # MissingModules by modulegraph so we convert them to
+    # RuntimeModules so their hooks are loaded and run.
+    api.add_runtime_module(api.module_name)

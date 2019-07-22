@@ -7,9 +7,10 @@
 # The full license is in the file COPYING.txt, distributed with this software.
 #-----------------------------------------------------------------------------
 
-# hook for https://github.com/r0x0r/pywebview
+import os
+import ssl
+import sys
 
-from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
-
-datas = collect_data_files('webview', 'lib')
-binaries = collect_dynamic_libs('webview')
+# Use certificate from certifi only if cafile could not find by ssl.
+if ssl.get_default_verify_paths().cafile is None:
+    os.environ['SSL_CERT_FILE'] = os.path.join(sys._MEIPASS, 'certifi', 'cacert.pem')
