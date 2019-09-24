@@ -27,8 +27,12 @@ if pyqt5_library_info.version:
     datas = []
     for source, dest in system_data_files:
         if os.path.basename(source) == 'qt.conf':
-            # 'dest' on Linux devices is returned as an absolute path and we need a relative
-            datas.append((source, 'qt.conf'))
+            # 'dest' on Linux is returned as an absolute path (same as the source)
+            # while on Windows we have 'dest' as relative.
+            # However we should place qt.conf along with the main executable
+            # as per the Qt docs.
+            datas.append((source, '.'))
+            break
 
     # Collect required Qt binaries.
     binaries = get_qt_binaries(pyqt5_library_info)
