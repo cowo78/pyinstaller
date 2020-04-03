@@ -108,7 +108,7 @@ Build-Time Python Errors
 |PyInstaller| sometimes terminates by raising a Python exception.
 In most cases the reason is clear from the exception message,
 for example "Your system is not supported", or "Pyinstaller
-requires at least Python 2.7".
+requires at least Python 3.5".
 Others clearly indicate a bug that should be reported.
 
 One of these errors can be puzzling, however:
@@ -142,11 +142,17 @@ or just to learn how the runtime works.
 
 Normally the debug progress messages go to standard output.
 If the ``--windowed`` option is used when bundling a Windows app,
-they are displayed as MessageBoxes.
+they are sent to any attached debugger. If you are not using a debugger
+(or don't have one), the DebugView_ the free (beer) tool can be used to
+display such messages. It has to be started before running the bundled
+application.
+
+.. _DebugView: https://docs.microsoft.com/en-us/sysinternals/downloads/debugview
+
 For a ``--windowed`` Mac OS app they are not displayed.
 
-Remember to bundle without ``--debug`` for your production version.
-Users would find the messages annoying.
+Consider bundling without ``--debug`` for your production version.
+Debugging messages require system calls and have an impact on performance.
 
 
 .. _getting python's verbose imports:

@@ -1,10 +1,12 @@
 #-----------------------------------------------------------------------------
-# Copyright (c) 2014-2019, PyInstaller Development Team.
+# Copyright (c) 2014-2020, PyInstaller Development Team.
 #
-# Distributed under the terms of the GNU General Public License with exception
-# for distributing bootloader.
+# Distributed under the terms of the GNU General Public License (version 2
+# or later) with exception for distributing the bootloader.
 #
 # The full license is in the file COPYING.txt, distributed with this software.
+#
+# SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
 #-----------------------------------------------------------------------------
 
 import os
@@ -23,8 +25,9 @@ if pyqt5_library_info.version:
     if compat.is_darwin:
         # This is based on the layout of the Mac wheel from PyPi.
         data_path = pyqt5_library_info.location['DataPath']
-        libraries = ['QtCore', 'QtWebEngineCore', 'QtQuick', 'QtQml', 'QtNetwork',
-                     'QtGui', 'QtWebChannel', 'QtPositioning']
+        libraries = ['QtCore', 'QtWebEngineCore', 'QtQuick', 'QtQml',
+                     'QtQmlModels', 'QtNetwork', 'QtGui', 'QtWebChannel',
+                     'QtPositioning']
         for i in libraries:
             datas += collect_system_data_files(
                 os.path.join(data_path, 'lib', i + '.framework'),

@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 #-----------------------------------------------------------------------------
-# Copyright (c) 2005-2019, PyInstaller Development Team.
+# Copyright (c) 2005-2020, PyInstaller Development Team.
 #
-# Distributed under the terms of the GNU General Public License with exception
-# for distributing bootloader.
+# Distributed under the terms of the GNU General Public License (version 2
+# or later) with exception for distributing the bootloader.
 #
 # The full license is in the file COPYING.txt, distributed with this software.
+#
+# SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
 #-----------------------------------------------------------------------------
 
 # Library imports
@@ -19,10 +21,9 @@ import py
 
 # Local imports
 # -------------
-from PyInstaller.compat import is_win, is_py3, \
-    is_darwin, is_linux, is_64bits
+from PyInstaller.compat import is_win, is_darwin, is_linux, is_64bits
 from PyInstaller.utils.hooks import is_module_satisfies
-from PyInstaller.utils.tests import importorskip, xfail, skipif
+from PyInstaller.utils.tests import importorskip, xfail, skipif, skipif_win
 
 # :todo: find a way to get this from `conftest` or such
 # Directory with testing modules used in some tests.
@@ -31,7 +32,7 @@ _DATA_DIR = py.path.local(os.path.abspath(__file__)).dirpath('data')
 
 
 @importorskip('boto')
-@pytest.mark.skipif(is_py3, reason='boto does not fully support Python 3')
+@pytest.mark.xfail(reason='boto does not fully support Python 3')
 def test_boto(pyi_builder):
     pyi_builder.test_script('pyi_lib_boto.py')
 
@@ -74,17 +75,11 @@ def test_enchant(pyi_builder):
     pyi_builder.test_script('pyi_lib_enchant.py')
 
 
-@skipif(is_py3, reason="Only tests Python 2.7 feature")
-def test_future(pyi_builder):
-    pyi_builder.test_script('pyi_future.py')
-
-
-@skipif(is_py3, reason="Only tests Python 2.7 feature")
-def test_future_queue(pyi_builder):
+@importorskip('tensorflow')
+def test_tensorflow(pyi_builder):
     pyi_builder.test_source(
         """
-        import queue
-        queue.Queue()
+        from tensorflow import *
         """
     )
 
@@ -119,11 +114,7 @@ def test_tkinter_FixTk(pyi_builder):
     # TODO: Python 3 contains module 'tkinter._fix' - does it need any special test or handling?
     # TODO: How does the following code check if FixTk is included?
     pyi_builder.test_source("""
-    try:
-        # In Python 2 the module name is 'Tkinter'
-        import Tkinter
-    except ImportError:
-        import tkinter
+    import tkinter
     """)
 
 @importorskip('zmq')
@@ -432,9 +423,15 @@ def test_Qt5_QTranslate(pyi_builder, monkeypatch, QtPyLib):
         """.format(QtPyLib))
 
 
-@xfail(True, reason="Hook is old and needs updating.")
 @importorskip('PySide2')
 def test_PySide2_QWebEngine(pyi_builder, data_dir):
+    if is_darwin:
+        # QWebEngine on OS X only works with a onedir build -- onefile builds
+        # don't work. Skip the test execution for onefile builds.
+        if pyi_builder._mode != 'onedir':
+            pytest.skip('The QWebEngine .app bundle '
+                        'only supports onedir mode.')
+
     pyi_builder.test_source(get_QWebEngine_html('PySide2', data_dir),
                             **USE_WINDOWED_KWARG)
 
@@ -484,7 +481,6 @@ def test_lxml_isoschematron(pyi_builder):
 def test_numpy(pyi_builder):
     pyi_builder.test_source(
         """
-        from __future__ import print_function
         import numpy
         from numpy.core.numeric import dot
         print('dot(3, 4):', dot(3, 4))
@@ -544,7 +540,6 @@ def test_pycparser(pyi_builder):
 def test_pycrypto(pyi_builder):
     pyi_builder.test_source(
         """
-        from __future__ import print_function
         import binascii
         from Crypto.Cipher import AES
         BLOCK_SIZE = 16
@@ -756,11 +751,7 @@ def test_pil_FixTk(pyi_builder):
     # hook-PIL is excluding FixTk, but is must still be included
     # since it is imported elsewhere. Also see issue #1584.
     pyi_builder.test_source("""
-    try:
-        # In Python 2 the module name is 'Tkinter'
-        import Tkinter
-    except ImportError:
-        import tkinter
+    import tkinter
     import FixTk, PIL
     """)
 
@@ -845,7 +836,7 @@ def test_pinyin(pyi_builder):
 
 
 @importorskip('uvloop')
-@skipif(is_win or not is_py3, reason='Windows, or py < 3.5 not supported')
+@skipif_win
 def test_uvloop(pyi_builder):
     pyi_builder.test_source("import uvloop")
 
@@ -874,4 +865,15 @@ def test_pendulum(pyi_builder):
         import pendulum
 
         print(pendulum.now().isoformat())
+        """)
+
+
+@importorskip('argon2')
+def test_argon2(pyi_builder):
+    pyi_builder.test_source("""
+        from argon2 import PasswordHasher
+
+        ph = PasswordHasher()
+        hash = ph.hash("s3kr3tp4ssw0rd")
+        ph.verify(hash, "s3kr3tp4ssw0rd")
         """)

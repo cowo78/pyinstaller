@@ -1,10 +1,12 @@
 #-----------------------------------------------------------------------------
-# Copyright (c) 2013-2019, PyInstaller Development Team.
+# Copyright (c) 2013-2020, PyInstaller Development Team.
 #
-# Distributed under the terms of the GNU General Public License with exception
-# for distributing bootloader.
+# Distributed under the terms of the GNU General Public License (version 2
+# or later) with exception for distributing the bootloader.
 #
 # The full license is in the file COPYING.txt, distributed with this software.
+#
+# SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
 #-----------------------------------------------------------------------------
 
 """
@@ -23,8 +25,8 @@ import collections
 from .. import compat
 from ..compat import (is_win, is_win_10, is_unix,
                       is_aix, is_solar, is_cygwin, is_hpux,
-                      is_darwin, is_freebsd, is_venv, is_conda, base_prefix,
-                      PYDYLIB_NAMES)
+                      is_darwin, is_freebsd, is_openbsd, is_venv, is_conda,
+                      base_prefix, PYDYLIB_NAMES)
 from . import dylib, utils
 
 from .. import log as logging
@@ -339,6 +341,9 @@ def getAssemblies(pth):
     Redistributable runtime libraries 9.0.
 
     Python 3.3+ is compiled with version 10.0 and does not use SxS assemblies.
+
+    FIXME: Can this be removed since we now only support Python 3.5+?
+    FIXME: IS there some test-case covering this?
     """
     if pth.lower().endswith(".manifest"):
         return []
@@ -810,7 +815,7 @@ def findLibrary(name):
                 paths.append('/usr/local/lib/hpux32')
             else:
                 paths.append('/usr/local/lib/hpux64')
-        elif is_freebsd:
+        elif is_freebsd or is_openbsd:
             paths.append('/usr/local/lib')
         for path in paths:
             libs = glob(os.path.join(path, name + '*'))
@@ -823,7 +828,7 @@ def findLibrary(name):
         return None
 
     # Resolve the file name into the soname
-    if is_freebsd or is_aix:
+    if is_freebsd or is_aix or is_openbsd:
         # On FreeBSD objdump doesn't show SONAME,
         # and on AIX objdump does not exist,
         # so we just return the lib we've found
@@ -841,7 +846,11 @@ def _get_so_name(filename):
     """
     # TODO verify that objdump works on other unixes and not Linux only.
     cmd = ["objdump", "-p", filename]
-    m = re.search(r'\s+SONAME\s+([^\s]+)', compat.exec_command(*cmd))
+    pattern = r'\s+SONAME\s+([^\s]+)'
+    if is_solar:
+        cmd = ["elfdump", "-d", filename]
+        pattern = r'\s+SONAME\s+[^\s]+\s+([^\s]+)'
+    m = re.search(pattern, compat.exec_command(*cmd))
     return m.group(1)
 
 

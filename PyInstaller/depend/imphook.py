@@ -1,10 +1,12 @@
 #-----------------------------------------------------------------------------
-# Copyright (c) 2005-2019, PyInstaller Development Team.
+# Copyright (c) 2005-2020, PyInstaller Development Team.
 #
-# Distributed under the terms of the GNU General Public License with exception
-# for distributing bootloader.
+# Distributed under the terms of the GNU General Public License (version 2
+# or later) with exception for distributing the bootloader.
 #
 # The full license is in the file COPYING.txt, distributed with this software.
+#
+# SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
 #-----------------------------------------------------------------------------
 
 
@@ -16,8 +18,7 @@ import glob, sys, weakref
 import os.path
 
 from .. import log as logging
-from ..compat import (
-    expand_path, importlib_load_source, FileNotFoundError)
+from ..compat import expand_path, importlib_load_source
 from .imphookapi import PostGraphAPI
 from ..building.utils import format_binaries_and_datas
 
@@ -284,7 +285,9 @@ class ModuleHook(object):
 
         # Safety check, see above
         global HOOKS_MODULE_NAMES
-        assert self.hook_module_name not in HOOKS_MODULE_NAMES
+        assert self.hook_module_name not in HOOKS_MODULE_NAMES, \
+            'Hook Conflict. Please remove the following custom hook: ' \
+            '{hook}'.format(hook=self.hook_module_name)
         HOOKS_MODULE_NAMES.add(self.hook_module_name)
 
         # Attributes subsequently defined by the _load_hook_module() method.

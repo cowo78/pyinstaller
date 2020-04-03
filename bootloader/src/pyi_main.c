@@ -1,10 +1,13 @@
 /*
  * ****************************************************************************
- * Copyright (c) 2013-2019, PyInstaller Development Team.
- * Distributed under the terms of the GNU General Public License with exception
- * for distributing bootloader.
+ * Copyright (c) 2013-2020, PyInstaller Development Team.
+ *
+ * Distributed under the terms of the GNU General Public License (version 2
+ * or later) with exception for distributing the bootloader.
  *
  * The full license is in the file COPYING.txt, distributed with this software.
+ *
+ * SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
  * ****************************************************************************
  */
 
@@ -45,8 +48,6 @@ pyi_main(int argc, char * argv[])
     int rc = 0;
     char *extractionpath = NULL;
     wchar_t * dllpath_w;
-
-    int i = 0;
 
 #ifdef _MSC_VER
     /* Visual C runtime incorrectly buffers stderr */

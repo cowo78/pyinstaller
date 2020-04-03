@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 #-----------------------------------------------------------------------------
-# Copyright (c) 2005-2019, PyInstaller Development Team.
+# Copyright (c) 2005-2020, PyInstaller Development Team.
 #
-# Distributed under the terms of the GNU General Public License with exception
-# for distributing bootloader.
+# Distributed under the terms of the GNU General Public License (version 2
+# or later) with exception for distributing the bootloader.
 #
 # The full license is in the file COPYING.txt, distributed with this software.
+#
+# SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
 #-----------------------------------------------------------------------------
 
 # Library imports
@@ -20,9 +22,10 @@ import pytest
 
 # Local imports
 # -------------
-from PyInstaller.compat import is_darwin, is_win, is_py2, is_py37
+from PyInstaller.compat import is_darwin, is_win, is_py37
 from PyInstaller.utils.tests import importorskip, skipif, skipif_win, \
-    skipif_winorosx, skipif_notwin, skipif_notosx, skipif_no_compiler, xfail
+    skipif_winorosx, skipif_notwin, skipif_notosx, skipif_no_compiler, \
+    skipif_notlinux, xfail
 from PyInstaller.utils.hooks import is_module_satisfies
 
 
@@ -37,6 +40,28 @@ def test_absolute_ld_library_path(pyi_builder):
 
 def test_absolute_python_path(pyi_builder):
     pyi_builder.test_script('pyi_absolute_python_path.py')
+
+
+@skipif_notlinux
+@skipif(not os.path.exists('/proc/self/status'),
+        reason='/proc/self/status does not exist')
+@pytest.mark.parametrize("symlink_name",
+                         ["symlink",
+                          "very_long_name_in_symlink",
+                          "sub/dir/progam"])
+def test_symlink_basename_is_kept(pyi_builder_spec, symlink_name,
+                                  tmpdir, SPEC_DIR, SCRIPT_DIR):
+
+    def patch(spec_name, symlink_name):
+        content = SPEC_DIR.join(spec_name).read_text(encoding="utf-8")
+        content = content.replace("@SYMLINKNAME@", symlink_name)
+        content = content.replace("@SCRIPTDIR@", str(SCRIPT_DIR))
+        outspec = tmpdir.join(spec_name)
+        outspec.write_text(content, encoding="utf-8", ensure=True)
+        return outspec
+
+    specfile = patch("symlink_basename_is_kept.spec", symlink_name)
+    pyi_builder_spec.test_spec(str(specfile), app_name=symlink_name)
 
 
 def test_pyz_as_external_file(pyi_builder, monkeypatch):
@@ -100,11 +125,7 @@ def test_compiled_filenames(pyi_builder):
 def test_decoders_ascii(pyi_builder):
     pyi_builder.test_source(
         """
-        # This import forces Python 2 to handle string as unicode -
-        # as with prefix 'u'.
-        from __future__ import unicode_literals
-
-        # Convert type 'bytes' to type 'str' (Py3) or 'unicode' (Py2).
+        # Convert type 'bytes' to type 'str'.
         assert b'foo'.decode('ascii') == 'foo'
         """)
 
@@ -131,8 +152,6 @@ def test_dynamic_module(pyi_builder):
 
 
 def test_email(pyi_builder):
-    # Test import of new-style email module names.
-    # This should work on Python 2.5+
     pyi_builder.test_source(
         """
         from email import utils
@@ -344,14 +363,7 @@ def test_stderr_encoding(tmpdir, pyi_builder):
     #             OEM codepage. spawned subprocess has the same encoding. test passes.
     #
     with open(os.path.join(tmpdir.strpath, 'stderr_encoding.build'), 'w') as f:
-        if is_py2:
-            if sys.stderr.isatty() and is_win:
-                enc = str(sys.stderr.encoding)
-            else:
-                # In Python 2 on Mac OS X and Linux 'sys.stderr.encoding' is set to None.
-                # On Windows when running in non-interactive terminal it is None.
-                enc = 'None'
-        elif sys.stderr.isatty():
+        if sys.stderr.isatty():
             enc = str(sys.stderr.encoding)
         else:
             # For non-interactive stderr use locale encoding - ANSI codepage.
@@ -363,14 +375,7 @@ def test_stderr_encoding(tmpdir, pyi_builder):
 
 def test_stdout_encoding(tmpdir, pyi_builder):
     with open(os.path.join(tmpdir.strpath, 'stdout_encoding.build'), 'w') as f:
-        if is_py2:
-            if sys.stdout.isatty() and is_win:
-                enc = str(sys.stdout.encoding)
-            else:
-                # In Python 2 on Mac OS X and Linux 'sys.stdout.encoding' is set to None.
-                # On Windows when running in non-interactive terminal it is None.
-                enc = 'None'
-        elif sys.stdout.isatty():
+        if sys.stdout.isatty():
             enc = str(sys.stdout.encoding)
         else:
             # For non-interactive stderr use locale encoding - ANSI codepage.
@@ -420,7 +425,6 @@ def test_xmldom_module(pyi_builder):
 def test_threading_module(pyi_builder):
     pyi_builder.test_source(
         """
-        from __future__ import print_function
         import threading
         import sys
 
@@ -554,8 +558,6 @@ def test_option_runtime_tmpdir(pyi_builder):
         if sys.platform == 'win32':
             import win32api
         cwd = os.path.abspath(os.getcwd())
-        if sys.platform == 'win32' and sys.version_info < (3,):
-            cwd = win32api.GetShortPathName(cwd)
         runtime_tmpdir = os.path.abspath(sys._MEIPASS)
         # for onedir mode, runtime_tmpdir == cwd
         # for onefile mode, os.path.dirname(runtime_tmpdir) == cwd

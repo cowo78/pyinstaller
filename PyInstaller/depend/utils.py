@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 #-----------------------------------------------------------------------------
-# Copyright (c) 2005-2019, PyInstaller Development Team.
+# Copyright (c) 2005-2020, PyInstaller Development Team.
 #
-# Distributed under the terms of the GNU General Public License with exception
-# for distributing bootloader.
+# Distributed under the terms of the GNU General Public License (version 2
+# or later) with exception for distributing the bootloader.
 #
 # The full license is in the file COPYING.txt, distributed with this software.
+#
+# SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
 #-----------------------------------------------------------------------------
 
 
@@ -23,12 +25,12 @@ import re
 import struct
 import zipfile
 
+from ..exceptions import ExecCommandFailed
 from ..lib.modulegraph import util, modulegraph
 
 from .. import compat
-from ..compat import (is_darwin, is_unix, is_freebsd, is_py2, is_py37,
-                      BYTECODE_MAGIC, PY3_BASE_MODULES,
-                      exec_python_rc)
+from ..compat import (is_darwin, is_unix, is_freebsd, is_openbsd, is_py37,
+                      BYTECODE_MAGIC, PY3_BASE_MODULES)
 from .dylib import include_library
 from .. import log as logging
 
@@ -65,7 +67,10 @@ def create_py3_base_library(libzip_filename, graph):
         # Class zipfile.PyZipFile is not suitable for PyInstaller needs.
         with zipfile.ZipFile(libzip_filename, mode='w') as zf:
             zf.debug = 3
-            for mod in graph.flatten():
+            # Sort the graph nodes by identifier to ensure repeatable builds
+            graph_nodes = list(graph.flatten())
+            graph_nodes.sort(key=lambda item: item.identifier)
+            for mod in graph_nodes:
                 if type(mod) in (modulegraph.SourceModule, modulegraph.Package):
                     # Bundling just required modules.
                     if module_filter.match(mod.identifier):
@@ -360,16 +365,15 @@ def load_ldconfig_cache():
             LDCONFIG_CACHE = {}
             return
 
-    if is_freebsd:
+    if is_freebsd or is_openbsd:
         # This has a quite different format than other Unixes
         # [vagrant@freebsd-10 ~]$ ldconfig -r
         # /var/run/ld-elf.so.hints:
         #     search directories: /lib:/usr/lib:/usr/lib/compat:...
         #     0:-lgeom.5 => /lib/libgeom.so.5
         #   184:-lpython2.7.1 => /usr/local/lib/libpython2.7.so.1
-        text = compat.exec_command(ldconfig, '-r')
-        text = text.strip().splitlines()[2:]
-        pattern = re.compile(r'^\s+\d+:-l(.+?)((\.\d+)+) => (\S+)')
+        ldconfig_arg = '-r'
+        splitlines_count = 2
         pattern = re.compile(r'^\s+\d+:-l(\S+)(\s.*)? => (\S+)')
     else:
         # Skip first line of the library list because it is just
@@ -379,16 +383,25 @@ def load_ldconfig_cache():
         #V keši „/etc/ld.so.cache“ nalezeno knihoven: 2799
         #      libzvbi.so.0 (libc6,x86-64) => /lib64/libzvbi.so.0
         #      libzvbi-chains.so.0 (libc6,x86-64) => /lib64/libzvbi-chains.so.0
-        text = compat.exec_command(ldconfig, '-p')
-        text = text.strip().splitlines()[1:]
+        ldconfig_arg = '-p'
+        splitlines_count = 1
         pattern = re.compile(r'^\s+(\S+)(\s.*)? => (\S+)')
+
+    try:
+        text = compat.exec_command(ldconfig, ldconfig_arg)
+    except ExecCommandFailed:
+        logger.warning("Failed to execute ldconfig. Disabling LD cache.")
+        LDCONFIG_CACHE = {}
+        return
+
+    text = text.strip().splitlines()[splitlines_count:]
 
     LDCONFIG_CACHE = {}
     for line in text:
         # :fixme: this assumes libary names do not contain whitespace
         m = pattern.match(line)
         path = m.groups()[-1]
-        if is_freebsd:
+        if is_freebsd or is_openbsd:
             # Insert `.so` at the end of the lib's basename. soname
             # and filename may have (different) trailing versions. We
             # assume the `.so` in the filename to mark the end of the

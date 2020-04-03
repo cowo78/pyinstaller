@@ -1,10 +1,12 @@
 # ----------------------------------------------------------------------------
-# Copyright (c) 2005-2019, PyInstaller Development Team.
+# Copyright (c) 2005-2020, PyInstaller Development Team.
 #
-# Distributed under the terms of the GNU General Public License with exception
-# for distributing bootloader.
+# Distributed under the terms of the GNU General Public License (version 2
+# or later) with exception for distributing the bootloader.
 #
 # The full license is in the file COPYING.txt, distributed with this software.
+#
+# SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
 # ----------------------------------------------------------------------------
 import os
 import re
@@ -12,7 +14,7 @@ import re
 from ..hooks import collect_submodules, collect_system_data_files, eval_statement, exec_statement
 from ... import log as logging
 from ...compat import base_prefix, is_darwin, is_win, open_file, \
-    text_read_mode, text_type
+    text_read_mode
 from ...depend.bindepend import findSystemLibrary
 
 logger = logging.getLogger(__name__)
@@ -155,7 +157,7 @@ def gir_library_path_fix(path):
                         if 'lib' in item:
                             files[count] = '@loader_path/' + os.path.basename(item)
                     line = ''.join(split[0:2]) + ''.join(files)
-                f.write(text_type(line))
+                f.write(line)
 
         # g-ir-compiler expects a file so we cannot just pipe the fixed file to it.
         command = subprocess.Popen(('g-ir-compiler', os.path.join(CONF['workpath'], gir_name),

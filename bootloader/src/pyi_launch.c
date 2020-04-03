@@ -1,10 +1,13 @@
 /*
  * ****************************************************************************
- * Copyright (c) 2013-2019, PyInstaller Development Team.
- * Distributed under the terms of the GNU General Public License with exception
- * for distributing bootloader.
+ * Copyright (c) 2013-2020, PyInstaller Development Team.
+ *
+ * Distributed under the terms of the GNU General Public License (version 2
+ * or later) with exception for distributing the bootloader.
  *
  * The full license is in the file COPYING.txt, distributed with this software.
+ *
+ * SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
  * ****************************************************************************
  */
 
@@ -401,13 +404,7 @@ pyi_launch_run_scripts(ARCHIVE_STATUS *status)
             strcpy(buf, ptoc->name);
             strcat(buf, ".py");
             VS("LOADER: Running %s\n", buf);
-
-            if (is_py2) {
-                __file__ = PI_PyString_FromString(buf);
-            }
-            else {
-                __file__ = PI_PyUnicode_FromString(buf);
-            };
+            __file__ = PI_PyUnicode_FromString(buf);
             PI_PyObject_SetAttrString(__main__, "__file__", __file__);
             Py_DECREF(__file__);
 

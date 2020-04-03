@@ -174,10 +174,6 @@ for example::
 
    from PyInstaller.compat import modname_tkinter, is_win
 
-``is_py2``:
-   True when the active Python is version 2.7.
-``is_py3``:
-   True when the active Python is version 3.X.
 ``is_py35``, ``is_py36``, ``is_py37``:
    True when the current version of Python is at least 3.5, 3.6, or 3.7 respectively.
 
@@ -195,6 +191,8 @@ for example::
    True in AIX.
 ``is_freebsd``:
    True in FreeBSD.
+``is_openbsd``:
+   True in OpenBSD.
 
 ``is_venv``:
    True in any virtual environment (either virtualenv or venv).
@@ -203,7 +201,7 @@ for example::
    whether the installation is native or a virtual environment.
 
 ``modname_tkinter``:
-   String, ``Tkinter`` in Python 2.7 but ``tkinter`` in Python 3.
+   String ``tkinter`` (this module was named differently in Python 2).
    To prevent an unnecessary import of Tkinter, write::
 
       from PyInstaller.compat import modname_tkinter

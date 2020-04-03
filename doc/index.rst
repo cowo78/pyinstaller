@@ -12,7 +12,7 @@ PyInstaller Manual
 |PyInstaller| bundles a Python application and all its dependencies into
 a single package.
 The user can run the packaged app without installing a Python interpreter or any modules.
-|PyInstaller| supports Python 2.7 and Python 3.5+,
+|PyInstaller| supports Python 3.5 or newer,
 and correctly bundles the major Python packages
 such as numpy, PyQt, Django, wxPython, and others.
 
@@ -20,8 +20,9 @@ such as numpy, PyQt, Django, wxPython, and others.
 However, it is not a cross-compiler:
 to make a Windows app you run |PyInstaller| in Windows;
 to make a GNU/Linux app you run it in GNU/Linux, etc.
-|PyInstaller| has been used successfully with AIX, Solaris, and FreeBSD,
-but is not tested against them.
+|PyInstaller| has been used successfully with
+AIX, Solaris, FreeBSD and OpenBSD
+but testing against them is not part of our continuous integration tests.
 
 
 What's New This Release
@@ -32,7 +33,7 @@ better code quality through use of automated testing,
 and resolutions for many old issues.
 
 Functional changes include
-removal of support for Python prior to 2.7,
+removal of support for Python 2.7,
 an easier way to include data files
 in the bundle (:ref:`Adding Files to the Bundle`),
 and changes to the "hook" API (:ref:`Understanding PyInstaller Hooks`).

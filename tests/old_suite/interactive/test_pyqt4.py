@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 #-----------------------------------------------------------------------------
-# Copyright (c) 2013-2019, PyInstaller Development Team.
+# Copyright (c) 2013-2020, PyInstaller Development Team.
 #
-# Distributed under the terms of the GNU General Public License with exception
-# for distributing bootloader.
+# Distributed under the terms of the GNU General Public License (version 2
+# or later) with exception for distributing the bootloader.
 #
 # The full license is in the file COPYING.txt, distributed with this software.
+#
+# SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
 #-----------------------------------------------------------------------------
 
 
@@ -37,11 +39,12 @@ class MyDialog(QtGui.QDialog):
 
 def main():
     app = Qt.QApplication(sys.argv)
-    read_formats = ', '.join([unicode(format).lower() \
+    read_formats = ', '.join([str(format).lower() \
         for format in QtGui.QImageReader.supportedImageFormats()])
-    print(("Qt4 plugin paths: " + unicode(list(app.libraryPaths()))))
-    print(("Qt4 image read support: " + read_formats))
-    print(('Qt4 Libraries path: ' + unicode(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.LibrariesPath))))
+    print("Qt4 plugin paths:", list(app.libraryPaths()))
+    print("Qt4 image read support:",  read_formats)
+    print('Qt4 Libraries path:',
+          str(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.LibrariesPath)))
     ex = MyDialog()
     app.exec_()
 

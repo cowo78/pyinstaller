@@ -1,25 +1,17 @@
 #-----------------------------------------------------------------------------
-# Copyright (c) 2013-2019, PyInstaller Development Team.
+# Copyright (c) 2013-2020, PyInstaller Development Team.
 #
-# Distributed under the terms of the GNU General Public License with exception
-# for distributing bootloader.
+# Distributed under the terms of the GNU General Public License (version 2
+# or later) with exception for distributing the bootloader.
 #
 # The full license is in the file COPYING.txt, distributed with this software.
+#
+# SPDX-License-Identifier: (GPL-2.0-or-later WITH Bootloader-exception)
 #-----------------------------------------------------------------------------
 
 
 import os
 import sys
-
-
-try:
-    FileNotFoundError
-except NameError:
-    # FileNotFoundError is new in Python 3.0
-    # NB: Aliasing IOError is not a full emulation of FileNotFoundError,
-    # but far enough for this usecase, where the whole frozen program
-    # terminates when this exception occurs.
-    FileNotFoundError = IOError
 
 tcldir = os.path.join(sys._MEIPASS, 'tcl')
 tkdir = os.path.join(sys._MEIPASS, 'tk')
