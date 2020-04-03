@@ -142,19 +142,16 @@ or just to learn how the runtime works.
 
 Normally the debug progress messages go to standard output.
 If the ``--windowed`` option is used when bundling a Windows app,
-they are sent to any attached debugger. If you are not using a debugger
-(or don't have one), the DebugView_ the free (beer) tool can be used to
-display such messages. It has to be started before running the bundled
-application.
-
-.. _DebugView: https://docs.microsoft.com/en-us/sysinternals/downloads/debugview
+they are sent to any attached debugger. If you don't have or are not using a
+debugger the DebugView_ the free (beer) tool can be used to display such
+messages. It must be run before the application being bundled.
 
 For a ``--windowed`` Mac OS app they are not displayed.
 
 Consider bundling without ``--debug`` for your production version.
 Debugging messages require system calls and have an impact on performance.
 
-
+.. _DebugView: https://docs.microsoft.com/en-us/sysinternals/downloads/debugview
 .. _getting python's verbose imports:
 
 Getting Python's Verbose Imports
@@ -196,7 +193,7 @@ what is going on.
   Anyway, if a your GUI application fails,
   you can run your application on the command line,
   i.e. ``./dist/my_gui``.
-  
+
 This should give you the relevant error that is preventing your
 application from initializing, and you can then move on to other
 debugging steps.
@@ -207,7 +204,7 @@ Operation not permitted error
 
 If you use the --onefile and it fails to run you program with error like::
 
-    ./hello: error while loading shared libraries: libz.so.1: 
+    ./hello: error while loading shared libraries: libz.so.1:
     failed to map segment from shared object: Operation not permitted
 
 This can be caused by wrong permissions for the /tmp directory
