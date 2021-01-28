@@ -271,9 +271,14 @@ def Dependencies(lTOC, xtrapath=None, manifest=None, redirects=None):
             npath = os.path.normpath(os.path.normcase(npath))
             if lib in seen or npath in seen:
                 continue
+            # We have a new dependency here so we add to LTOC and feed it
+            # back to the original dataset as it may have still unseen
+            # dependencies itself .
+            # See https://github.com/pyinstaller/pyinstaller/pull/3735#issuecomment-751459681
             seen.add(lib)
             seen.add(npath)
             lTOC.append((lib, npath, 'BINARY'))
+            dataset.append((lib, npath, 'BINARY'))
 
     pool.close()
     pool.join()
